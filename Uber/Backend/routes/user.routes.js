@@ -13,12 +13,12 @@ router.post('/register', [  //using expression validator
     userController.registerUser //redirect to user.controller.js file for user registration logic
 )
 
-// router.post('/login', [
-//     body('email').isEmail().withMessage('Invalid Email'),
-//     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
-// ],
-//     userController.loginUser
-// )
+router.post('/login', [
+    body('email').isEmail().withMessage('Invalid Email'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
+],
+    userController.loginUser
+)
 
 // router.get('/profile', authMiddleware.authUser, userController.getUserProfile)
 
