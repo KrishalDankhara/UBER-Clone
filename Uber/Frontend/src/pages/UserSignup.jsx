@@ -1,11 +1,13 @@
 import React, { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Uber_Logo from '../assets/Uber_Logo.png'
+import { UserDataContext } from '../context/UserContext.jsx'
+import axios from 'axios'
 
 
 const UserSignup = () => {
   const [ email, setEmail ] = useState('')
-  const [ password, setPassword ] = useState('')
+  const [ password, setPassword ] = useState('') 
   const [ firstName, setFirstName ] = useState('')
   const [ lastName, setLastName ] = useState('')
   const [ userData, setUserData ] = useState({})
@@ -32,7 +34,7 @@ const UserSignup = () => {
 
     const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/users/register`, newUser)
 
-    if (response.status === 201) {
+    if (response.status === 201) { //if user created succesfully then only status 201 generates
       const data = response.data
       setUser(data.user)
       localStorage.setItem('token', data.token)

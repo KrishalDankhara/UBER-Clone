@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import Uber_Driver_Logo from '../assets/Uber_Driver_Logo.svg'
+import { CaptainDataContext } from '../context/CaptainContext.jsx'
+import axios from 'axios'
 
 const Captainlogin = () => {
 
