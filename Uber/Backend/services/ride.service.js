@@ -5,12 +5,24 @@ const crypto = require('crypto');
 
 //for calculating fare by using time and destination
 async function getFare(pickup, destination) {
-
     if (!pickup || !destination) {
         throw new Error('Pickup and destination are required');
     }
 
     const distanceTime = await mapService.getDistanceTime(pickup, destination);
+
+    // Defensive checks!
+    if (
+        !distanceTime ||
+        !distanceTime.distance ||
+        typeof distanceTime.distance.value !== 'number' ||
+        isNaN(distanceTime.distance.value) ||
+        !distanceTime.duration ||
+        typeof distanceTime.duration.value !== 'number' ||
+        isNaN(distanceTime.duration.value)
+    ) {
+        throw new Error('Invalid route information: Cannot calculate fare');
+    }
 
     const baseFare = {
         auto: 30,
@@ -30,18 +42,24 @@ async function getFare(pickup, destination) {
         moto: 1.5
     };
 
-
-
     const fare = {
         auto: Math.round(baseFare.auto + ((distanceTime.distance.value / 1000) * perKmRate.auto) + ((distanceTime.duration.value / 60) * perMinuteRate.auto)),
         car: Math.round(baseFare.car + ((distanceTime.distance.value / 1000) * perKmRate.car) + ((distanceTime.duration.value / 60) * perMinuteRate.car)),
         moto: Math.round(baseFare.moto + ((distanceTime.distance.value / 1000) * perKmRate.moto) + ((distanceTime.duration.value / 60) * perMinuteRate.moto))
     };
 
+    // Make sure NO NaN value sneaks in!
+    if (
+        isNaN(fare.auto) ||
+        isNaN(fare.car) ||
+        isNaN(fare.moto)
+    ) {
+        throw new Error('Fare calculation failed, invalid values');
+    }
+
     return fare;
-
-
 }
+
 
 module.exports.getFare = getFare;
 

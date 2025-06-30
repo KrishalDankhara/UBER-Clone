@@ -1,6 +1,7 @@
 const axios = require('axios');
 const captainModel = require('../models/captain.model');
 
+// Get coordinates from address using OpenStreetMap Nominatim
 module.exports.getAddressCoordinate = async (address) => {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
     try {
@@ -22,99 +23,110 @@ module.exports.getAddressCoordinate = async (address) => {
     }
 }
 
+// Get distance and time between two addresses using OSM+OSRM
 module.exports.getDistanceTime = async (origin, destination) => {
     if (!origin || !destination) {
         throw new Error('Origin and destination are required');
     }
 
-    const apiKey = process.env.GO_MAPS_API;
+    // Nominatim does NOT provide routes (just geocode). We need OSRM or other!
+    // For demo, fallback: use Nominatim for geocode, and just use straight-line "as crow flies" distance
 
-    const url = `https://maps.gomaps.pro/maps/api/distancematrix/json?origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(destination)}&key=${apiKey}`;
-
-    try {
-
-
-        const response = await axios.get(url);
-        if (response.data.status === 'OK') {
-
-            if (response.data.rows[ 0 ].elements[ 0 ].status === 'ZERO_RESULTS') {
-                throw new Error('No routes found');
-            }
-
-            return response.data.rows[ 0 ].elements[ 0 ];
-        } else {
-            throw new Error('Unable to fetch distance and time');
-        }
-
-    } catch (err) {
-        console.error(err);
-        throw err;
+    // 1. Geocode both points
+    const [originRes, destRes] = await Promise.all([
+        axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(origin)}&format=json&limit=1`, {
+            headers: { 'User-Agent': 'UberCloneDemo/1.0 (test@email.com)' }
+        }),
+        axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=1`, {
+            headers: { 'User-Agent': 'UberCloneDemo/1.0 (test@email.com)' }
+        })
+    ]);
+    if (!originRes.data.length || !destRes.data.length) {
+        throw new Error('Location not found');
     }
-}
+    const originLoc = originRes.data[0];
+    const destLoc = destRes.data[0];
 
+    // Calculate straight-line distance (Haversine)
+    function toRad(deg) {
+        return deg * (Math.PI / 180);
+    }
+    function haversine(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // meters
+        const φ1 = toRad(lat1), φ2 = toRad(lat2);
+        const Δφ = toRad(lat2 - lat1);
+        const Δλ = toRad(lon2 - lon1);
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c; // meters
+    }
+
+    const distance = haversine(
+        parseFloat(originLoc.lat),
+        parseFloat(originLoc.lon),
+        parseFloat(destLoc.lat),
+        parseFloat(destLoc.lon)
+    );
+    // Estimate: 40km/hr speed for duration
+    const duration = distance / (40 * 1000 / 3600); // seconds
+
+    console.log('[getDistanceTime] origin:', origin, '->', destination);
+    console.log('[getDistanceTime] coords:', originLoc, destLoc);
+    console.log('[getDistanceTime] distance:', distance, 'meters, duration:', duration, 'seconds');
+
+    return {
+        distance: { value: distance, text: `${(distance/1000).toFixed(1)} km` },
+        duration: { value: duration, text: `${Math.round(duration/60)} mins` }
+    };
+};
+
+
+// Free autocomplete with Nominatim (OpenStreetMap)
+// Free autocomplete with Nominatim (OpenStreetMap)
 module.exports.getAutoCompleteSuggestions = async (input) => {
-    if (!input) {
-        throw new Error('query is required');
+    if (!input || input.length < 2) {
+        throw new Error('Query is required and must be at least 2 characters.');
     }
-
-    const apiKey = process.env.GO_MAPS_API;
-
-    // Build both API URLs
-    const autocompleteUrl = `https://maps.gomaps.pro/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${apiKey}`;
-    const queryAutocompleteUrl = `https://maps.gomaps.pro/maps/api/place/queryautocomplete/json?input=${encodeURIComponent(input)}&key=${apiKey}`;
-
+    // Nominatim doesn't have official autocomplete, but we use &limit=5 for top results
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(input)}&format=json&limit=5&addressdetails=1`;
     try {
-        // Run both APIs in parallel
-        const [autocompleteRes, queryAutocompleteRes] = await Promise.all([
-            axios.get(autocompleteUrl),
-            axios.get(queryAutocompleteUrl)
-        ]);
-
-        let suggestions = [];
-
-        // Collect from Place Autocomplete
-        if (autocompleteRes.data.status === 'OK' && autocompleteRes.data.predictions) {
-            suggestions = suggestions.concat(
-                autocompleteRes.data.predictions.map(pred => pred.description)
-            );
-        }
-
-        // Collect from Query Autocomplete
-        if (queryAutocompleteRes.data.status === 'OK' && queryAutocompleteRes.data.predictions) {
-            suggestions = suggestions.concat(
-                queryAutocompleteRes.data.predictions.map(pred => pred.description)
-            );
-        }
-
-        // Remove duplicates and filter out falsy values
-        const uniqueSuggestions = [...new Set(suggestions)].filter(Boolean);
-
-        if (uniqueSuggestions.length === 0) {
+        const response = await axios.get(url, {
+            headers: { 'User-Agent': 'UberCloneDemo/1.0 (your@email.com)' }
+        });
+        if (!response.data || response.data.length === 0) {
             throw new Error('No suggestions found');
         }
-
-        return uniqueSuggestions;
-
+        // Return display names as suggestions
+        return response.data.map(r => r.display_name);
     } catch (err) {
         console.error(err);
         throw new Error('Unable to fetch suggestions');
     }
 }
 
-module.exports.getCaptainsInTheRadius = async (ltd, lng, radius) => {
 
-    // radius in km
-
-    // mongoDB makes this query for you
+// Unchanged: MongoDB geospatial query
+module.exports.getCaptainsInTheRadius = async (lng, lat, radius) => {
+    if (
+        typeof lng !== 'number' || isNaN(lng) ||
+        typeof lat !== 'number' || isNaN(lat) ||
+        typeof radius !== 'number' || isNaN(radius)
+    ) {
+        throw new Error('Longitude, latitude, and radius must all be valid numbers');
+    }
+    // Note: Make sure your coordinates order in MongoDB is [lng, lat] and has a 2dsphere index
+    console.log('Looking for captains near:', lng, lat, radius);
     const captains = await captainModel.find({
         location: {
             $geoWithin: {
-                $centerSphere: [ [ ltd, lng ], radius / 6371 ]
+                $centerSphere: [[lng, lat], radius / 6371]
             }
         }
     });
-
+    console.log('Found captains:', captains);
     return captains;
-
-
 }

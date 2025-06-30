@@ -27,20 +27,45 @@ function initializeSocket(server) {
         });
 
 
+        // socket.on('update-location-captain', async (data) => {
+        //     const { userId, location } = data;
+
+        //     if (!location || !location.ltd || !location.lng) {
+        //         return socket.emit('error', { message: 'Invalid location data' });
+        //     }
+
+        //     await captainModel.findByIdAndUpdate(userId, {
+        //         location: {
+        //             ltd: location.ltd,
+        //             lng: location.lng
+        //         }
+        //     });
+        // });
+
         socket.on('update-location-captain', async (data) => {
-            const { userId, location } = data;
+    const { userId, location } = data;
 
-            if (!location || !location.ltd || !location.lng) {
-                return socket.emit('error', { message: 'Invalid location data' });
-            }
+    // Accept both 'lat' or 'ltd' key for latitude (typo tolerance)
+    const lat = location.lat || location.ltd;
+    const lng = location.lng;
 
-            await captainModel.findByIdAndUpdate(userId, {
-                location: {
-                    ltd: location.ltd,
-                    lng: location.lng
-                }
-            });
-        });
+    if (
+        typeof lat !== 'number' ||
+        typeof lng !== 'number' ||
+        isNaN(lat) ||
+        isNaN(lng)
+    ) {
+        return socket.emit('error', { message: 'Invalid location data' });
+    }
+
+    await captainModel.findByIdAndUpdate(userId, {
+        location: {
+            type: 'Point',
+            coordinates: [lng, lat]
+        }
+    });
+});
+
 
         socket.on('disconnect', () => {
             console.log(`Client disconnected: ${socket.id}`);
