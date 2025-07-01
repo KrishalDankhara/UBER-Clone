@@ -1,9 +1,36 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Uber_Map1 from '../assets/Uber_Map1.gif'
 import Uber_Driver from  '../assets/Uber_Driver.jpeg'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import PaymentModal from '../components/PaymentModal'
 
 const Riding = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [ride, setRide] = useState(location.state?.ride || null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
+
+  useEffect(() => {
+    // If no ride data, redirect to home
+    if (!ride) {
+      navigate('/home');
+    }
+  }, [ride, navigate]);
+
+  const handlePaymentSuccess = (paymentData) => {
+    setPaymentCompleted(true);
+    console.log('Payment completed:', paymentData);
+    // You can show a success message or redirect
+    setTimeout(() => {
+      navigate('/home');
+    }, 3000);
+  };
+
+  if (!ride) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className='h-screen'>
         <Link to='/home' className='fixed right-2 top-2 h-10 w-10 bg-white flex items-center justify-center rounded-full'>
@@ -25,22 +52,41 @@ const Riding = () => {
             <div className='flex gap-2 justify-between flex-col items-center'>
                 <div className='w-full mt-5 bg-white'>
                     <div className='flex items-center gap-5 p-3 border-b-3'>
-                        <i className='text-lg ri-map-pin-2-fill'></i>
+                                                <i className='text-lg ri-map-pin-2-fill'></i>
                         <div>
-                            <h3 className='text-lg font-medium'>562/11-A</h3>
-                            <p className='text-sm -mt-1 text-gray-600'>Kankariya Lake, Ahmedabad</p>
+                            <h3 className='text-lg font-medium'>{ride.destination}</h3>
+                            <p className='text-sm -mt-1 text-gray-600'>Destination</p>
                         </div>
                     </div>
                     <div className='flex items-center gap-5 p-3'>
                         <i className='text-lg ri-currency-line'></i>
                         <div>
-                            <h3 className='text-lg font-medium'>₹193.20</h3>
-                            <p className='text-sm -mt-1 text-gray-600'>Cash Cash</p>
-                        </div>
+                            <h3 className='text-lg font-medium'>₹{ride.fare}</h3>
+                            <p className='text-sm -mt-1 text-gray-600'>{paymentCompleted ? 'Paid' : 'Pending Payment'}</p>
+                        </div> 
                     </div> 
                 </div>
             </div>
-            <button className='w-full mt-5 bg-green-600 text-white font-semibold p-2 rounded-lg'>Make a Payment</button>
+            
+            {paymentCompleted ? (
+                <div className='w-full mt-5 bg-green-600 text-white font-semibold p-2 rounded-lg text-center'>
+                    ✅ Payment Completed Successfully!
+                </div>
+            ) : (
+                <button 
+                    onClick={() => setShowPaymentModal(true)}
+                    className='w-full mt-5 bg-green-600 text-white font-semibold p-2 rounded-lg hover:bg-green-700 transition-colors'
+                >
+                    Make a Payment - ₹{ride.fare}
+                </button>
+            )}
+
+            <PaymentModal 
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                ride={ride}
+                onPaymentSuccess={handlePaymentSuccess}
+            />
         </div>
     </div>
   )
