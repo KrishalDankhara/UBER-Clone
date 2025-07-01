@@ -182,23 +182,41 @@ module.exports.confirmRide = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { rideId } = req.body;
+    console.log("confirmRide req.body:", req.body);
+    console.log("confirmRide req.captain:", req.captain);
+
+    const { rideId, captainId } = req.body;
+
+    // Fix: support both session and body captainId
+    let captain = req.captain;
+    if (!captain && captainId) {
+        const captainModel = require('../models/captain.model');
+        captain = await captainModel.findById(captainId);
+        if (!captain) {
+            return res.status(400).json({ message: 'Captain not found' });
+        }
+    }
+    if (!captain) {
+        return res.status(400).json({ message: 'Captain not provided' });
+    }
 
     try {
-        const ride = await rideService.confirmRide({ rideId, captain: req.captain });
+        const ride = await rideService.confirmRide({ rideId, captain });
 
         sendMessageToSocketId(ride.user.socketId, {
             event: 'ride-confirmed',
             data: ride
-        })
+        });
 
         return res.status(200).json(ride);
     } catch (err) {
-
         console.log(err);
         return res.status(500).json({ message: err.message });
     }
 }
+
+
+
 
 module.exports.startRide = async (req, res) => {
     const errors = validationResult(req);
@@ -245,5 +263,5 @@ module.exports.endRide = async (req, res) => {
         return res.status(200).json(ride);
     } catch (err) {
         return res.status(500).json({ message: err.message });
-    } s
+    } 
 }
