@@ -2,6 +2,7 @@ const captainModel = require('../models/captain.model');
 const captainService = require('../services/captain.service');
 const blackListTokenModel = require('../models/blackListToken.model');
 const { validationResult } = require('express-validator');
+const rideModel = require('../models/ride.model');
 
 // module.exports.registerCaptain = async (req, res, next) => {
 
@@ -130,6 +131,41 @@ module.exports.updateLocation = async (req, res) => {
             return res.status(404).json({ message: 'Captain not found.' });
         }
         res.status(200).json({ message: 'Location updated successfully.', captain: updatedCaptain });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports.getCaptainStats = async (req, res) => {
+    try {
+        const captainId = req.params.id;
+
+        // Get today's date range
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Find all rides for this captain today
+        const ridesToday = await rideModel.find({
+            captain: captainId,
+            status: 'completed',
+            updatedAt: { $gte: startOfDay, $lte: endOfDay }
+        });
+
+        // Calculate earnings and total rides
+        const earningsToday = ridesToday.reduce((sum, ride) => sum + (ride.fare || 0), 0);
+        const totalRides = await rideModel.countDocuments({ captain: captainId });
+
+        // For demo: fake online time as 4 hours (14400 seconds)
+        // You can implement real tracking if you want
+        const onlineTime = 4 * 3600;
+
+        res.json({
+            earningsToday,
+            totalRides,
+            onlineTime
+        });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

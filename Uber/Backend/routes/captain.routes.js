@@ -29,4 +29,6 @@ router.get('/logout', authMiddleware.authCaptain, captainController.logoutCaptai
 
 router.post('/update-location', authMiddleware.authCaptain, captainController.updateLocation);
 
+router.get('/:id/stats', captainController.getCaptainStats);
+
 module.exports = router;

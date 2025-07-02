@@ -2,6 +2,10 @@ import React from 'react'
 import Uber_Driver_Profile from '../assets/Uber_Driver_Profile.avif'
 
 const RidePopUp = (props) => {
+  if (!props.ride || !props.ride.user || !props.ride.user.fullname) {
+    return null; // Don't render if ride data is incomplete
+  }
+
   return (
     <div>
         <h5 className='p-1 text-center w-[93%] absolute top-0' onClick={()=>{

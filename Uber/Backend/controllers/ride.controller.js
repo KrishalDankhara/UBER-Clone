@@ -135,7 +135,7 @@ module.exports.createRide = async (req, res) => {
         ride.otp = ""; // Or implement your OTP logic
 
         // 5. Populate user details for the notification
-        const rideWithUser = await rideModel.findOne({ _id: ride._id }).populate('user');
+        const rideWithUser = await rideModel.findOne({ _id: ride._id }).populate('user').select('+otp');
 
         // 6. Notify all captains
         captainsInRadius.forEach(captain => {
