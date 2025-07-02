@@ -35,31 +35,64 @@ module.exports.authUser = async (req, res, next) => {
     }
 }
 
-module.exports.authCaptain = async (req, res, next) => {
-    const token = req.cookies.token || req.headers.authorization?.split(' ')[ 1 ];
+// module.exports.authCaptain = async (req, res, next) => {
+//     const token = req.cookies.token || req.headers.authorization?.split(' ')[ 1 ];
 
+
+//     if (!token) {
+//         return res.status(401).json({ message: 'Unauthorized' });
+//     }
+
+//     const isBlacklisted = await blackListTokenModel.findOne({ token: token });
+
+
+
+//     if (isBlacklisted) {
+//         return res.status(401).json({ message: 'Unauthorized' });
+//     }
+
+//     try {
+//         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//         const captain = await captainModel.findById(decoded._id)
+//         req.captain = captain;
+
+//         return next()
+//     } catch (err) {
+//         console.log(err);
+
+//         res.status(401).json({ message: 'Unauthorized' });
+//     }
+// }
+
+module.exports.authCaptain = async (req, res, next) => {
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 
     if (!token) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.status(401).json({ message: 'Unauthorized: Token not provided' });
     }
 
-    const isBlacklisted = await blackListTokenModel.findOne({ token: token });
-
-
-
+    const isBlacklisted = await blackListTokenModel.findOne({ token });
     if (isBlacklisted) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.status(401).json({ message: 'Unauthorized: Token blacklisted' });
     }
 
     try {
+        console.log("[authCaptain] Token:", token);
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const captain = await captainModel.findById(decoded._id)
+        console.log("[authCaptain] Decoded ID:", decoded._id);
+        
+        const captain = await captainModel.findById(decoded._id);
+        console.log("[authCaptain] Captain found:", captain);
+
+        if (!captain) {
+            return res.status(401).json({ message: 'Unauthorized: Captain not found' });
+        }
+
         req.captain = captain;
-
-        return next()
+        next();
     } catch (err) {
-        console.log(err);
-
-        res.status(401).json({ message: 'Unauthorized' });
+        console.error('[authCaptain] Error verifying token:', err.message);
+        return res.status(401).json({ message: 'Unauthorized: Invalid token' });
     }
 }

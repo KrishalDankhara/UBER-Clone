@@ -18,6 +18,7 @@ const CaptainProtectWrapper = ({
     useEffect(() => {
         if (!token) {
             navigate('/captain-login')
+            return;
         }
 
         axios.get(`${import.meta.env.VITE_BASE_URL}/captains/profile`, {
@@ -31,11 +32,17 @@ const CaptainProtectWrapper = ({
             }
         })
             .catch(err => {
-
-                localStorage.removeItem('token')
-                navigate('/captain-login')
+                // Try to restore from localStorage if backend fails
+                const stored = localStorage.getItem("captain");
+                if (stored && stored !== "null") {
+                    setCaptain(JSON.parse(stored));
+                    setIsLoading(false);
+                } else {
+                    localStorage.removeItem('token')
+                    navigate('/captain-login')
+                }
             })
-    }, [ token ])
+    }, [ token, setCaptain, navigate ])
 
     
 

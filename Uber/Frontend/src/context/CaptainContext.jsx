@@ -1,11 +1,17 @@
-import { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useEffect } from "react";
 
 export const CaptainDataContext = createContext();
 
-const CaptainContext = ({ children }) => {
+export const CaptainDataProvider = ({ children }) => {
     const [ captain, setCaptain ] = useState(null);
     const [ isLoading, setIsLoading ] = useState(false);
     const [ error, setError ] = useState(null);
+
+    useEffect(() => {
+        // Restore captain from localStorage if available
+        const stored = localStorage.getItem("captain");
+        if (stored) setCaptain(JSON.parse(stored));
+    }, []);
 
     const updateCaptain = (captainData) => {
         setCaptain(captainData);
@@ -28,4 +34,4 @@ const CaptainContext = ({ children }) => {
     );
 };
 
-export default CaptainContext;
+export default CaptainDataProvider;

@@ -1,4 +1,3 @@
-
 import React from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
@@ -14,6 +13,8 @@ export const CaptainLogout = () => {
     }).then((response) => {
         if (response.status === 200) {
             localStorage.removeItem('captain-token')
+            localStorage.removeItem('token')
+            localStorage.removeItem('captain')
             navigate('/captain-login')
         }
     })

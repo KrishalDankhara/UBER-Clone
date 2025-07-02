@@ -11,6 +11,7 @@ import { useEffect, useContext } from 'react'
 import { SocketContext } from '../context/SocketContext'
 import { CaptainDataContext } from '../context/CaptainContext'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 
 const CaptainHome = () => {
 
@@ -23,6 +24,9 @@ const CaptainHome = () => {
 
     const { socket } = useContext(SocketContext)
     const { captain } = useContext(CaptainDataContext)
+    const navigate = useNavigate()
+
+    if (!captain) return <div>Loading...</div>;
 
     useEffect(() => {
         socket.emit('join', {
@@ -59,6 +63,12 @@ const CaptainHome = () => {
     })
 
     async function confirmRide() {
+        const token = localStorage.getItem('token')
+        if (!token) {
+            alert("You must be logged in as a captain to confirm a ride.")
+            navigate('/captain-login')
+            return
+        }
 
         const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/rides/confirm`, {
 

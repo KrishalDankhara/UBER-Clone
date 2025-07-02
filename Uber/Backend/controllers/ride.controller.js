@@ -106,6 +106,11 @@ module.exports.createRide = async (req, res) => {
         console.log('[Ride Creation] Creating ride for:', pickup, '->', destination);
 
         // 1. Create the ride document
+
+        if (!req.user || !req.user._id) {
+            return res.status(401).json({ message: 'Unauthorized: User not found in request' });
+        }
+        
         const ride = await rideService.createRide({ user: req.user._id, pickup, destination, vehicleType });
         console.log('[Ride Creation] Ride DB record created:', ride._id);
 
@@ -242,6 +247,30 @@ module.exports.startRide = async (req, res) => {
     }
 }
 
+// module.exports.endRide = async (req, res) => {
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//         return res.status(400).json({ errors: errors.array() });
+//     }
+
+//     const { rideId } = req.body;
+
+//     try {
+//         const ride = await rideService.endRide({ rideId, captain: req.captain });
+
+//         sendMessageToSocketId(ride.user.socketId, {
+//             event: 'ride-ended',
+//             data: ride
+//         })
+
+
+
+//         return res.status(200).json(ride);
+//     } catch (err) {
+//         return res.status(500).json({ message: err.message });
+//     } 
+// }
+
 module.exports.endRide = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -250,18 +279,29 @@ module.exports.endRide = async (req, res) => {
 
     const { rideId } = req.body;
 
+    // ✅ Prevent null captain error
+    if (!req.captain || !req.captain._id) {
+        console.error('[endRide] ❌ Missing or invalid captain');
+        return res.status(401).json({ message: 'Unauthorized: Captain not found or invalid token' });
+    }
+
     try {
         const ride = await rideService.endRide({ rideId, captain: req.captain });
+
+        if (!ride || !ride.user?.socketId) {
+            return res.status(400).json({ message: 'Ride or user socket ID missing' });
+        }
 
         sendMessageToSocketId(ride.user.socketId, {
             event: 'ride-ended',
             data: ride
-        })
-
-
+        });
 
         return res.status(200).json(ride);
     } catch (err) {
-        return res.status(500).json({ message: err.message });
-    } 
-}
+        console.error('[endRide] ❌ Error:', err.message);
+        return res.status(500).json({ message: err.message || 'Internal Server Error' });
+    }
+};
+
+

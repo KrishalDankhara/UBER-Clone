@@ -57,7 +57,7 @@ const Riding = () => {
                         </div>
                     </div>
                 </div>
-                <PayButton amount={100} />
+                <PayButton amount={ride?.fare} rideId={ride?._id} />
             </div>
         </div>
     )

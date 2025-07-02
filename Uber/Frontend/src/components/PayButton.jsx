@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 const PayButton = ({ amount, rideId }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handlePayment = async () => {
     setIsLoading(true);
@@ -32,6 +34,7 @@ const PayButton = ({ amount, rideId }) => {
             });
             if (verifyRes.data.success) {
               alert("Payment verified and successful!");
+              navigate('/home');
             } else {
               alert("Payment verification failed!");
             }

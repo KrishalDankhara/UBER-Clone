@@ -186,6 +186,13 @@ const Home = () => {
     }
 
     async function createRide() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert("You must be logged in to create a ride.");
+            navigate('/login');
+            return;
+        }
+        console.log("Token being sent:", localStorage.getItem('token'));
         const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/rides/create`, {
             pickup,
             destination,

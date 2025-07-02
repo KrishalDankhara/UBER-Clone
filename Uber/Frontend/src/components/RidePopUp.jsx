@@ -1,5 +1,5 @@
 import React from 'react'
-import Uber_Driver_Profile1 from '../assets/Uber_Driver_Profile1.avif'
+import Uber_Driver_Profile from '../assets/Uber_Driver_Profile.avif'
 
 const RidePopUp = (props) => {
   return (
@@ -10,10 +10,12 @@ const RidePopUp = (props) => {
         <h3 className='text-2xl font-semibold mb-5'>New Ride Available!</h3>
         <div className='flex items-center justify-between p-3 bg-yellow-300 rounded-lg mt-4'>
             <div className='flex items-center gap-3'>
-                <img className='h-12 w-10 rounded-full object-cover' src={Uber_Driver_Profile1} alt="Driver_photo" />
+                <img className='h-12 w-10 rounded-full object-cover' src={Uber_Driver_Profile} alt="Driver_photo" />
                 <h2 className='text-lg font-medium'>{props.ride?.user.fullname.firstname + " " + props.ride?.user.fullname.lastname}</h2>
             </div>
-            <h5 className='text-lg font-semibold'>2.2 KM</h5>
+            <h5 className='text-lg font-semibold'>
+              {props.ride?.distance ? `${(props.ride.distance / 1000).toFixed(1)} KM` : '...'}
+            </h5>
         </div>
         <div className='flex gap-2 justify-between flex-col items-center'>
             <div className='w-full mt-5'>
