@@ -35,7 +35,7 @@ router.post('/verify', async (req, res) => {
   if (generated_signature === razorpay_signature) {
     // Payment is verified, update ride/payment status
     if (rideId) {
-      await Ride.findByIdAndUpdate(rideId, { status: "paid" });
+      await Ride.findByIdAndUpdate(rideId, { status: "completed" });
     }
     return res.json({ success: true, message: "Payment verified and ride updated" });
   } else {
