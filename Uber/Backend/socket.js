@@ -7,8 +7,9 @@ let io;
 function initializeSocket(server) {
     io = socketIo(server, {
         cors: {
-            origin: '*',
-            methods: [ 'GET', 'POST' ]
+            origin: 'https://uber-clone-frontend-kayc.onrender.com',
+            methods: [ 'GET', 'POST' ],
+            credentials: true
         }
     });
 

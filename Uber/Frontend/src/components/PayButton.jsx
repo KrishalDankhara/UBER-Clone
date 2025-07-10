@@ -10,9 +10,10 @@ const PayButton = ({ amount, rideId }) => {
     setIsLoading(true);
     try {
       // 1. Create order on backend
-      const { data: order } = await axios.post("http://localhost:4000/api/payment/create-order", {
-        amount, // in INR
-      });
+      const { data: order } = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/api/payment/create-order`,
+        { amount }
+      );
 
       // 2. Open Razorpay checkout
       const options = {
@@ -26,7 +27,7 @@ const PayButton = ({ amount, rideId }) => {
           console.log("Razorpay Payment Response:", response);
           // Send these to your backend for verification and ride update
           try {
-            const verifyRes = await axios.post("http://localhost:4000/api/payment/verify", {
+            const verifyRes = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/payment/verify`, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,

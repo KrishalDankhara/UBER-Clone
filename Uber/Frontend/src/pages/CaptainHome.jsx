@@ -73,12 +73,13 @@ const CaptainHome = () => {
 
     useEffect(() => {
         if (!captain) return;
-        axios.get(`http://localhost:4000/captains/${captain._id}/stats`, {
+        axios.get(`${import.meta.env.VITE_BASE_URL}/captains/${captain._id}/stats`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
         .then(res => setStats(res.data))
         .catch(() => setStats({ earningsToday: 0, totalRides: 0, onlineTime: 0 }));
     }, [captain]);
+    
 
     if (!captain) return <div>Loading...</div>;
 

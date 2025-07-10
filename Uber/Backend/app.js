@@ -14,7 +14,10 @@ const paymentRoutes = require('./routes/payment.routes');
 
 connectToDb();
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://uber-clone-frontend-kayc.onrender.com',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
